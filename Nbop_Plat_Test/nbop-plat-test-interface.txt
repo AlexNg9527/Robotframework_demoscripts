@@ -1,0 +1,80 @@
+*** Settings ***
+Library           RequestsLibrary
+Library           Collections
+Library           CustomLibrary
+
+*** Variables ***
+${url}            http://127.0.0.1:8080/
+${new_id}         11
+
+*** Test Cases ***
+1_getBookList
+    Create Session    getBookList    ${url}
+    ${headers}    Create Dictionary    Content-Type=application/x-www-form-urlencoded
+    ${resp}    post Request    getBookList    /test/book/getBookList    headers=${headers}
+    Should Be Equal As Strings    ${resp.status_code}    200
+    log    ${resp.content}
+
+2_addbook_successed
+    ${url}    Set Variable    ${url}test/book/addBook
+    ${data}    Set Variable    {id: "${new_id}", name: "Jenkins权威指南", author: "John Ferguson Smart", year: "2016", digest: "John Ferguson Smart，Wakaleo Consulting的主管。"}
+    ${name}    Set Variable    bookValues
+    ${resp}    Multipart post    url=${url}    name=${name}    data=${data}
+    Should Be Equal As Strings    ${resp.status_code}    200
+    Should Contain    ${resp.content}    "success":true
+
+2_addbook_duplicated
+    ${url}    Set Variable    ${url}test/book/addBook
+    ${data}    Set Variable    {id: "11", name: "Jenkins权威指南", author: "John Ferguson Smart", year: "2016", digest: "John Ferguson Smart，Wakaleo Consulting的主管。"}
+    ${name}    Set Variable    bookValues
+    ${resp}    Multipart post    url=${url}    name=${name}    data=${data}
+    ${resp}    Multipart post    url=${url}    name=${name}    data=${data}
+    Should Be Equal As Strings    ${resp.status_code}    200
+    Should Contain    ${resp.content}    "errorInfo":"该id已存在。
+
+3_updateBook_successed
+    ${url}    Set Variable    ${url}test/book/addBook
+    ${data}    Set Variable    {id: "4", name: "Jenkins权威指南", author: "John Ferguson Smart", year: "2016", digest: "John Ferguson Smart，Wakaleo Consulting的主管。"}
+    ${name}    Set Variable    bookValues
+    ${resp}    Multipart post    url=${url}    name=${name}    data=${data}
+    ${url}    Set Variable    http://127.0.0.1:8080/test/book/updateBook
+    ${data}    Set Variable    {\"id\":\"4\", \"name\": \"第一本Docker书 修订版\", \"author\": \"James Turnbull\", \"year\": \"2016\", \"digest\": \"这是一本好书\"}
+    ${name}    Set Variable    bookValues
+    ${resp}    Multipart post    url=${url}    name=${name}    data=${data}
+    Should Be Equal As Strings    ${resp.status_code}    200
+    Should Contain    ${resp.content}    "success":true
+
+3_updateBook_failed
+    ${url}    Set Variable    ${url}test/book/deleteBook
+    ${data}    Set Variable    {"id":"14"}
+    ${name}    Set Variable    idString
+    ${resp}    Multipart post    url=${url}    name=${name}    data=${data}
+    ${url}    Set Variable    http://127.0.0.1:8080/test/book/updateBook
+    ${data}    Set Variable    {\"id\":\"14\", \"name\": \"第一本Docker书 修订版\", \"author\": \"James Turnbull\", \"year\": \"2016\", \"digest\": \"这是一本好书\"}
+    ${name}    Set Variable    bookValues
+    ${resp}    Multipart post    url=${url}    name=${name}    data=${data}
+    Should Be Equal As Strings    ${resp.status_code}    200
+    Should Contain    ${resp.content}    errorInfo":"该id不存在。
+
+4_deleteBook_successed
+    ${url}    Set Variable    ${url}test/book/addBook
+    ${data}    Set Variable    {id: "10", name: "Jenkins权威指南", author: "John Ferguson Smart", year: "2016", digest: "John Ferguson Smart，Wakaleo Consulting的主管。"}
+    ${name}    Set Variable    bookValues
+    ${resp}    Multipart post    url=${url}    name=${name}    data=${data}
+    ${url}    Set Variable    http://127.0.0.1:8080/test/book/deleteBook
+    ${data}    Set Variable    {"id":"10"}
+    ${name}    Set Variable    idString
+    ${resp}    Multipart post    url=${url}    name=${name}    data=${data}
+    Should Be Equal As Strings    ${resp.status_code}    200
+    Should Contain    ${resp.content}    "success":true
+
+4_deleteBook_notexist
+    ${url}    Set Variable    ${url}test/book/deleteBook
+    ${data}    Set Variable    {"id":"9"}
+    ${name}    Set Variable    idString
+    ${resp}    Multipart post    url=${url}    name=${name}    data=${data}
+    ${resp}    Multipart post    url=${url}    name=${name}    data=${data}
+    Should Be Equal As Strings    ${resp.status_code}    200
+    Should Contain    ${resp.content}    errorInfo":"该id不存在
+
+*** Keywords ***

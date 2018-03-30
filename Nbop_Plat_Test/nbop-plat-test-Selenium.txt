@@ -1,0 +1,112 @@
+*** Settings ***
+Library           RequestsLibrary
+Library           Collections
+Library           CustomLibrary
+Library           Selenium2Library
+
+*** Variables ***
+${url}            http://127.0.0.1:8080/
+${new_id}         27
+
+*** Test Cases ***
+1_图书列表
+    open browser    ${url}
+    Wait Until Page Contains    图书管理
+    sleep    2
+    click element    xpath = //*[@id="treeview-1015-record-book_manage"]/td/div/span
+    page should contain    添加
+    close browser
+
+2_新增图书
+    open browser    ${url}
+    Wait Until Page Contains    图书管理
+    sleep    2
+    click element    xpath = //*[@id="treeview-1015-record-book_manage"]/td/div/span
+    Wait Until Page Contains    添加
+    click element    id=button-1045-btnInnerEl
+    input text    id=numberfield-1053-inputEl    ${new_id}
+    input text    id=textfield-1054-inputEl    测试书籍${new_id}
+    input text    id=textfield-1055-inputEl    书籍作者${new_id}
+    input text    id=numberfield-1056-inputEl    2018
+    input text    id=textarea-1057-inputEl    我是摘要${new_id}
+    click element    id=button-1059-btnIconEl
+    page should contain    添加书籍成功
+    click element    id=button-1005-btnIconEl
+    close browser
+
+2_新增图书_已存在
+    ${data}    Set Variable    {id: "${new_id}", name: "Jenkins权威指南", author: "John Ferguson Smart", year: "2016", digest: "John Ferguson Smart，Wakaleo Consulting的主管。"}
+    ${name}    Set Variable    bookValues
+    ${resp}    Multipart post    url=${url}test/book/addBook    name=${name}    data=${data}
+    open browser    ${url}
+    Wait Until Page Contains    图书管理
+    sleep    2
+    click element    xpath = //*[@id="treeview-1015-record-book_manage"]/td/div/span
+    Wait Until Page Contains    添加
+    click element    id=button-1045-btnInnerEl
+    input text    id=numberfield-1053-inputEl    ${new_id}
+    input text    id=textfield-1054-inputEl    测试书籍${new_id}
+    input text    id=textfield-1055-inputEl    书籍作者${new_id}
+    input text    id=numberfield-1056-inputEl    2018
+    input text    id=textarea-1057-inputEl    我是摘要${new_id}
+    click element    id=button-1059-btnIconEl
+    page should contain    已存在
+    click element    id=button-1005-btnIconEl
+    close browser
+
+3_编辑图书_双击行_成功
+    ${data}    Set Variable    {id: "${new_id}", name: "Jenkins权威指南", author: "John Ferguson Smart", year: "2016", digest: "John Ferguson Smart，Wakaleo Consulting的主管。"}
+    ${name}    Set Variable    bookValues
+    ${resp}    Multipart post    url=${url}test/book/addBook    name=${name}    data=${data}
+    open browser    ${url}
+    Wait Until Page Contains    图书管理
+    sleep    2
+    click element    xpath = //*[@id="treeview-1015-record-book_manage"]/td/div/span
+    Wait Until Page Contains    添加
+    double click element    xpath = //*[@id="gridview-1043-record-${new_id}"]/td[1]/div
+    input text    id=textfield-1054-inputEl    测试书籍${new_id}
+    input text    id=textfield-1055-inputEl    书籍作者${new_id}
+    input text    id=numberfield-1056-inputEl    2018
+    input text    id=textarea-1057-inputEl    我是摘要${new_id}
+    click element    id=button-1059-btnIconEl
+    page should contain    更新成功
+    click element    id=button-1005-btnIconEl
+    close browser
+
+3_编辑图书_单击行_id不存在
+    ${data}    Set Variable    {"id":"9"}
+    ${name}    Set Variable    idString
+    ${resp}    Multipart post    url=${url}/book/deleteBook    name=${name}    data=${data}
+    open browser    ${url}
+    Wait Until Page Contains    图书管理
+    sleep    2
+    click element    xpath = //*[@id="treeview-1015-record-book_manage"]/td/div/span
+    Wait Until Page Contains    添加
+    click element    xpath = //*[@id="gridview-1043-record-1"]/td[1]/div
+    click element    xpath = //*[@id="button-1047-btnInnerEl"]
+    input text    id=numberfield-1053-inputEl    10
+    input text    id=textfield-1054-inputEl    测试书籍${new_id}
+    input text    id=textfield-1055-inputEl    书籍作者${new_id}
+    input text    id=numberfield-1056-inputEl    2018
+    input text    id=textarea-1057-inputEl    我是摘要${new_id}
+    click element    id=button-1059-btnIconEl
+    page should contain    该id不存在
+    click element    xpath=//*[@id="button-1005-btnIconEl"]
+    close browser
+
+4_删除图书
+    ${data}    Set Variable    {id: "${new_id}", name: "Jenkins权威指南", author: "John Ferguson Smart", year: "2016", digest: "John Ferguson Smart，Wakaleo Consulting的主管。"}
+    ${name}    Set Variable    bookValues
+    ${resp}    Multipart post    url=${url}test/book/addBook    name=${name}    data=${data}
+    open browser    ${url}
+    Wait Until Page Contains    图书管理
+    sleep    2
+    click element    xpath = //*[@id="treeview-1015-record-book_manage"]/td/div/span
+    Wait Until Page Contains    添加
+    click element    xpath = //*[@id="gridview-1043-record-${new_id}"]/td[1]/div
+    click element    xpath = //*[@id="button-1046-btnInnerEl"]
+    click element    xpath = //*[@id="button-1006-btnIconEl"]
+    page should contain    删除书籍成功！
+    sleep    1
+    click element    xpath=//*[@id="button-1005-btnIconEl"]
+    close browser
